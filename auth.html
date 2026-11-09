@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>SBA 기사 클리핑 — 카카오톡 수신자 등록</title>
+<style>
+  body { font-family: -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; max-width: 560px; margin: 40px auto; padding: 0 20px; color: #222; line-height: 1.6; }
+  h1 { font-size: 1.3rem; }
+  .btn { display: inline-block; background: #FEE500; color: #191919; font-weight: 700; padding: 14px 22px; border-radius: 10px; text-decoration: none; font-size: 1.05rem; border: 0; cursor: pointer; }
+  .btn.gray { background: #eee; }
+  .code { font-family: Consolas, Menlo, monospace; font-size: 0.95rem; word-break: break-all; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin: 12px 0; }
+  .step { margin: 18px 0; padding-left: 8px; border-left: 4px solid #FEE500; }
+  .muted { color: #777; font-size: 0.9rem; }
+  .ok { color: #1a7f37; font-weight: 700; }
+  .err { color: #b42318; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>SBA 기사 클리핑 — 카카오톡 수신자 등록</h1>
+
+<div id="start">
+  <p>매일 07:00 / 17:00 기사 클리핑을 <b>내 카카오톡(나와의 채팅)</b>으로 받으려면 아래 버튼으로 카카오 인증을 진행하세요.</p>
+  <p class="muted">인증 후 이 페이지로 돌아오며, 화면에 나오는 <b>인증 코드</b>를 담당자(또는 GitHub '수신자 등록' 실행 담당)에게 전달하면 등록이 완료됩니다. 코드는 10분 안에 사용해야 합니다.</p>
+  <p><button class="btn" id="go">카카오 계정으로 인증하기</button></p>
+  <p class="muted" id="cfgwarn"></p>
+</div>
+
+<div id="done" style="display:none">
+  <p class="ok">인증이 완료되었습니다. 아래 코드를 복사해서 전달하세요.</p>
+  <div class="code" id="codebox"></div>
+  <p><button class="btn" id="copy">코드 복사</button> <span id="copied" class="muted"></span></p>
+  <div class="step">
+    <b>다음 단계 (등록 담당)</b><br>
+    GitHub 저장소 → Actions → <b>수신자 등록</b> → Run workflow →
+    <b>이름</b>에 수신자 이름, <b>코드</b>에 이 값을 붙여넣고 실행.<br>
+    1~2분 뒤 해당 수신자의 카카오톡으로 "등록 완료" 메시지가 옵니다.
+  </div>
+  <p><button class="btn gray" id="again">다른 계정으로 다시 인증</button></p>
+</div>
+
+<div id="error" style="display:none">
+  <p class="err">인증이 취소되었거나 실패했습니다.</p>
+  <div class="code" id="errbox"></div>
+  <p><button class="btn gray" id="retry">다시 시도</button></p>
+</div>
+
+<script>
+// ▼▼ 이 한 줄만 수정: Kakao Developers > 앱 > 플랫폼 키 > REST API 키 ▼▼
+var REST_API_KEY = "여기에_REST_API_키";
+// ▲▲ REST API 키는 OAuth client_id 로 공개되는 값이라 페이지에 넣어도 됩니다 (시크릿 아님) ▲▲
+
+(function () {
+  var here = location.origin + location.pathname;   // 리다이렉트 URI = 이 페이지 주소
+  var q = new URLSearchParams(location.search);
+  var code = q.get("code"), err = q.get("error");
+
+  function show(id) {
+    ["start", "done", "error"].forEach(function (x) { document.getElementById(x).style.display = x === id ? "" : "none"; });
+  }
+  function startAuth() {
+    if (!REST_API_KEY || REST_API_KEY.indexOf("여기에") === 0) {
+      document.getElementById("cfgwarn").textContent = "auth.html 안의 REST_API_KEY 가 아직 설정되지 않았습니다.";
+      return;
+    }
+    var url = "https://kauth.kakao.com/oauth/authorize?response_type=code&scope=talk_message&prompt=login"
+      + "&client_id=" + encodeURIComponent(REST_API_KEY)
+      + "&redirect_uri=" + encodeURIComponent(here);
+    location.href = url;
+  }
+  function reset() { history.replaceState(null, "", here); show("start"); }
+
+  document.getElementById("go").onclick = startAuth;
+  document.getElementById("again").onclick = function () { reset(); startAuth(); };
+  document.getElementById("retry").onclick = reset;
+  document.getElementById("copy").onclick = function () {
+    navigator.clipboard.writeText(code).then(function () {
+      document.getElementById("copied").textContent = "복사되었습니다";
+    }, function () {
+      document.getElementById("copied").textContent = "복사 실패 — 코드를 길게 눌러 직접 복사하세요";
+    });
+  };
+
+  if (code) {
+    document.getElementById("codebox").textContent = code;
+    show("done");
+  } else if (err) {
+    document.getElementById("errbox").textContent = err + (q.get("error_description") ? " — " + q.get("error_description") : "");
+    show("error");
+  } else {
+    show("start");
+  }
+})();
+</script>
+</body>
+</html>
