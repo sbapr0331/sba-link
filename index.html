@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>기사로 이동 중…</title>
+<script>
+(function () {
+  var u = new URLSearchParams(location.search).get("u");
+  if (u && /^https?:\/\//i.test(u)) {
+    location.replace(u);
+  } else {
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.textContent = "잘못된 링크입니다.";
+    });
+  }
+})();
+</script>
+</head>
+<body>기사로 이동 중…</body>
+</html>
